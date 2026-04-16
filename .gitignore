@@ -1,0 +1,22 @@
+# Dune build artifacts
+_build/
+*.install
+
+# OCaml compiled files
+*.cmx
+*.cmi
+*.cmo
+*.cmxa
+*.cmxs
+*.a
+*.o
+
+*.byte
+*.native
+*.exe
+
+*.log
+
+.vscode/
+
+*.opam
