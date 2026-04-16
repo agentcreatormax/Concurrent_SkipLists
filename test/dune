@@ -4,11 +4,11 @@
 
 (executable
  (name qcheck_lin_finegrain_skiplist)
- (libraries finegrain_skiplist qcheck))
+ (libraries finegrain_skiplist qcheck-lin.domain))
 
 (executable
  (name qcheck_stm_finegrain_skiplist)
- (libraries finegrain_skiplist qcheck qcheck-stm))
+ (libraries finegrain_skiplist qcheck-stm.sequential qcheck-stm.domain qcheck-multicoretests-util))
 
 (executable
  (name test_lockfree_skiplist)
@@ -16,8 +16,8 @@
 
 (executable
  (name qcheck_lin_lockfree_skiplist)
- (libraries lockfree_skiplist qcheck))
+ (libraries lockfree_skiplist qcheck-lin.domain))
 
 (executable
  (name qcheck_stm_lockfree_skiplist)
- (libraries lockfree_skiplist qcheck qcheck-stm))
+ (libraries lockfree_skiplist qcheck-stm.sequential qcheck-stm.domain qcheck-multicoretests-util))
