@@ -1,0 +1,8 @@
+(library
+ (name atomic_markable_ref)
+ (modules atomic_markable_ref))
+
+(library
+ (name lockfree_skiplist)
+ (modules lockfree_skiplist)
+ (libraries atomic_markable_ref))

@@ -1,6 +1,0 @@
-# dune init project code
-# OCAMLPARAM: unset
-# Shared cache: enabled-except-user-rules
-# Shared cache location: /home/Nithin/.cache/dune/db
-# Workspace root: /home/Nithin/Desktop/CS6868/Concurrent_SkipLists/code
-# Auto-detected concurrency: 16

@@ -1,4 +1,4 @@
-module AMR = Atomic_markable_reference
+module AMR = Atomic_markable_ref
 
 let bottom_level = 0
 
