@@ -5,10 +5,10 @@ let bottom_level = 0
 type node = {
   key : int;
   top_level : int;
-  next : node AMR.list array;
+  next : node AMR.t array;
 }
 
-type list = {
+type t = {
   head : node;
   tail : node;
   max_level : int;
