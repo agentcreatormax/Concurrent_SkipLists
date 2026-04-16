@@ -172,7 +172,7 @@ let remove t key =
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
 
-  let rec attempt () =
+  let attempt () =
     if not (find t key preds succs) then
       false
     else begin

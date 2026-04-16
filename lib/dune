@@ -6,3 +6,9 @@
  (name lockfree_skiplist)
  (modules lockfree_skiplist)
  (libraries atomic_markable_ref))
+
+(library
+ (name finegrain_skiplist)
+ (modules finegrain_skiplist))
+
+

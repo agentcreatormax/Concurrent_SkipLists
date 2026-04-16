@@ -1,2 +1,23 @@
-(test
- (name test_code))
+(executable
+ (name test_finegrain_skiplist)
+ (libraries finegrain_skiplist))
+
+(executable
+ (name qcheck_lin_finegrain_skiplist)
+ (libraries finegrain_skiplist qcheck))
+
+(executable
+ (name qcheck_stm_finegrain_skiplist)
+ (libraries finegrain_skiplist qcheck qcheck-stm))
+
+(executable
+ (name test_lockfree_skiplist)
+ (libraries lockfree_skiplist))
+
+(executable
+ (name qcheck_lin_lockfree_skiplist)
+ (libraries lockfree_skiplist qcheck))
+
+(executable
+ (name qcheck_stm_lockfree_skiplist)
+ (libraries lockfree_skiplist qcheck qcheck-stm))
