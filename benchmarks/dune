@@ -1,0 +1,5 @@
+(executable
+ (name benchmark_skiplist)
+ (modules benchmark_skiplist)
+ (libraries lockfree_skiplist finegrain_skiplist unix)
+ (ocamlopt_flags (:standard -O3 -inline 100))) 
