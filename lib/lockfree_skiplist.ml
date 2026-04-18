@@ -142,24 +142,22 @@ let add t key =
         (* bottom level insert failed, retry *)
         attempt ()
       else begin
-        (* bottom level linked, now link upper levels.
-           We track whether new_node gets concurrently marked (removed) while
-           we are still splicing it into upper levels.  If that happens we
-           abort the splice loop and restart attempt() so the caller sees a
-           consistent state instead of looping forever trying to link a
-           dead node. *)
+        (* bottom-level CAS is the add linearization point *)
         let node_marked = ref false in
         let level = ref (bottom_level + 1) in
+
         while !level <= top_level && not !node_marked do
           let rec splice () =
-            (* check if new_node itself was removed under us *)
             let marked = ref false in
             ignore (AMR.get new_node.next.(bottom_level) marked);
+
             if !marked then
+              (* node already got removed, stop linking upper levels *)
               node_marked := true
             else begin
               let pred = preds.(!level) in
               let succ = succs.(!level) in
+
               if AMR.compare_and_set pred.next.(!level)
                    ~expected_ref:succ ~new_ref:new_node
                    ~expected_mark:false ~new_mark:false
@@ -175,9 +173,7 @@ let add t key =
           splice ();
           incr level
         done;
-        (* if new_node was removed while we were splicing, restart *)
-        if !node_marked then attempt ()
-        else true
+        true
       end
     end
   in
