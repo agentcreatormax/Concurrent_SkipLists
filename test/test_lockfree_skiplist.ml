@@ -1,7 +1,7 @@
 (** Manual concurrent tests for Lock-Free Skip List *)
 
 let printf = Printf.printf
-module S = LockFreeSkipLists
+module S = Lockfree_skiplist
 
 (* ── helpers ────────────────────────────────────────────────────────────── *)
 
