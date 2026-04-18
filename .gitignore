@@ -1,6 +1,5 @@
 # Dune build artifacts
 _build/
-results/
 *.install
 
 # OCaml compiled files
@@ -21,3 +20,6 @@ results/
 .vscode/
 
 *.opam
+
+results/
+benchmarks/__pycache__
