@@ -82,7 +82,7 @@ let find t key preds succs =
 
             if !marked then begin
               (* curr is marked, try to unlink it *)
-              let delete=
+              let delete =
                 AMR.compare_and_set ((!pred).next.(level))
                   ~expected_ref:!curr ~new_ref:succ
                   ~expected_mark:false ~new_mark:false
@@ -142,25 +142,42 @@ let add t key =
         (* bottom level insert failed, retry *)
         attempt ()
       else begin
-        (* bottom level linked, now link upper levels *)
-        for level = bottom_level + 1 to top_level do
+        (* bottom level linked, now link upper levels.
+           We track whether new_node gets concurrently marked (removed) while
+           we are still splicing it into upper levels.  If that happens we
+           abort the splice loop and restart attempt() so the caller sees a
+           consistent state instead of looping forever trying to link a
+           dead node. *)
+        let node_marked = ref false in
+        let level = ref (bottom_level + 1) in
+        while !level <= top_level && not !node_marked do
           let rec splice () =
-            let pred = preds.(level) in
-            let succ = succs.(level) in
-            if AMR.compare_and_set pred.next.(level)
-                 ~expected_ref:succ ~new_ref:new_node
-                 ~expected_mark:false ~new_mark:false
-            then
-              ()
+            (* check if new_node itself was removed under us *)
+            let marked = ref false in
+            ignore (AMR.get new_node.next.(bottom_level) marked);
+            if !marked then
+              node_marked := true
             else begin
-              (* level changed, refresh preds/succs and retry this level *)
-              ignore (find t key preds succs);
-              splice ()
+              let pred = preds.(!level) in
+              let succ = succs.(!level) in
+              if AMR.compare_and_set pred.next.(!level)
+                   ~expected_ref:succ ~new_ref:new_node
+                   ~expected_mark:false ~new_mark:false
+              then
+                ()
+              else begin
+                (* level changed, refresh preds/succs and retry this level *)
+                ignore (find t key preds succs);
+                splice ()
+              end
             end
           in
-          splice ()
+          splice ();
+          incr level
         done;
-        true
+        (* if new_node was removed while we were splicing, restart *)
+        if !node_marked then attempt ()
+        else true
       end
     end
   in
@@ -196,25 +213,31 @@ let remove t key =
         mark_level ()
       done;
 
-      (* bottom level mark is the actual remove point *)
+      (* bottom level mark is the linearization point of a successful remove.
+         We read the current succ from node_to_remove.next[0] before the CAS,
+         then refresh it afterwards (matching Java's
+           succ = succs[0].next[0].get(marked)
+         which is the same cell).  This ensures succ is never stale on retry. *)
       let marked = ref false in
+      let succ = ref (AMR.get node_to_remove.next.(bottom_level) marked) in
       let rec mark_bottom () =
-        let succ = AMR.get node_to_remove.next.(bottom_level) marked in
         let i_marked_it =
           AMR.compare_and_set node_to_remove.next.(bottom_level)
-            ~expected_ref:succ ~new_ref:succ
+            ~expected_ref:!succ ~new_ref:!succ
             ~expected_mark:false ~new_mark:true
         in
-        ignore (AMR.get node_to_remove.next.(bottom_level) marked);
+        (* refresh succ + mark so the next iteration uses the latest pointer *)
+        succ := AMR.get node_to_remove.next.(bottom_level) marked;
         if i_marked_it then begin
           (* help cleanup *)
           ignore (find t key preds succs);
           true
         end
         else if !marked then
+          (* another thread already marked it, we lost the race *)
           false
         else
-          (* succ changed, retry bottom mark *)
+          (* CAS failed but node still unmarked: succ changed, retry *)
           mark_bottom ()
       in
       mark_bottom ()
@@ -238,8 +261,8 @@ let contains t key =
 
       let rec skip_marked () =
         if !marked then begin
-          (* reread from pred *)
-          curr := AMR.get_reference ((!pred).next.(level));
+          (* jump over marked nodes *)
+          curr := !succ;
           succ := AMR.get ((!curr).next.(level)) marked;
           skip_marked ()
         end
@@ -248,12 +271,11 @@ let contains t key =
       skip_marked ();
 
       if (!curr).key < key then begin
-        (* move right *)
         pred := !curr;
         curr := !succ;
         scan ()
       end
-      (* else curr.key >= key, go one level down *)
+       (* else curr.key >= key, go one level down *)
     in
 
     scan ()
