@@ -7,10 +7,10 @@ let bottom_level = 0
 type node = {
   key          : int;
   top_level    : int;
-  next         : node option array;  (* next.(i) = successor at level i *)
+  next         : node option Atomic.t array;  (* next.(i) = successor at level i *)
   lock         : Mutex.t;            (* per-node lock *)
-  marked       : bool ref;           (* logical deletion flag *)
-  fully_linked : bool ref;           (* becomes true once node is visible *)
+  marked       : bool Atomic.t;           (* logical deletion flag *)
+  fully_linked : bool Atomic.t;           (* becomes true once node is visible *)
 }
 
 type t = {
@@ -39,10 +39,10 @@ let make_node key top_level =
   {
     key;
     top_level;
-    next         = Array.make (top_level + 1) None;
+    next = Array.init (top_level + 1) (fun _ -> Atomic.make None);
     lock         = Mutex.create ();
-    marked       = ref false;
-    fully_linked  = ref false;
+    marked       = Atomic.make false;
+    fully_linked  = Atomic.make false;
   }
 
 let create max_level =
@@ -51,9 +51,9 @@ let create max_level =
   else
     let tail = make_node max_int max_level in
     let head = make_node min_int max_level in
-    Array.fill head.next 0 (max_level + 1) (Some tail);
-    tail.fully_linked := true;
-    head.fully_linked := true;
+    Array.iter (fun cell -> Atomic.set cell (Some tail)) head.next;
+    Atomic.set tail.fully_linked true;
+    Atomic.set head.fully_linked true;
     { head; tail; max_level }
 
 (* ------------------------------------------------------------------ *)
@@ -65,10 +65,10 @@ let find t key preds succs =
   let pred  = ref t.head in
 
   for level = t.max_level downto bottom_level do
-    let curr = ref (Option.get !pred.next.(level)) in
+    let curr = ref (Option.get (Atomic.get !pred.next.(level))) in
     while !curr.key < key do
       pred := !curr;
-      curr := Option.get !curr.next.(level)
+      curr := Option.get (Atomic.get !curr.next.(level)) 
     done;
     if !found = -1 && !curr.key = key then
       found := level;
@@ -105,8 +105,8 @@ let contains t key =
   let succs = Array.make (t.max_level + 1) t.tail in
   let level_found = find t key preds succs in
   level_found >= 0
-  && !(succs.(level_found).fully_linked)
-  && not !(succs.(level_found).marked)
+  && Atomic.get succs.(level_found).fully_linked
+  && not (Atomic.get succs.(level_found).marked)
 
 (* ------------------------------------------------------------------ *)
 (* add                                                                *)
@@ -123,14 +123,14 @@ let add t key =
     if level_found >= 0 then begin
       (* Key already exists at some level. *)
       let node_found = succs.(level_found) in
-      if not !(node_found.marked) then begin
+      if not (Atomic.get (node_found.marked)) then begin
         (* Wait until the existing node becomes fully visible.
            This is optimistic waiting, not locking. *)
-        while not !(node_found.fully_linked)
-           && not !(node_found.marked) do
+        while not (Atomic.get (node_found.fully_linked))
+           && not (Atomic.get (node_found.marked)) do
           Domain.cpu_relax ()
         done;
-        if !(node_found.marked) then
+        if (Atomic.get (node_found.marked)) then
           attempt ()   (* node vanished while we waited, retry *)
         else
           false        (* already present *)
@@ -149,11 +149,11 @@ let add t key =
           for level = bottom_level to top_level do
             let pred = preds.(level) in
             let succ = succs.(level) in
-            if !(pred.marked) then begin
+            if Atomic.get pred.marked then begin
               valid := false;
               raise Exit
             end;
-            match pred.next.(level) with
+            match Atomic.get pred.next.(level) with
             | Some n when n == succ -> ()
             | _ ->
                 valid := false;
@@ -169,12 +169,12 @@ let add t key =
         (* Splice new node into every level it participates in. *)
         let new_node = make_node key top_level in
         for level = bottom_level to top_level do
-          new_node.next.(level) <- Some succs.(level);
-          preds.(level).next.(level) <- Some new_node
+          Atomic.set new_node.next.(level) (Some succs.(level));
+          Atomic.set preds.(level).next.(level) (Some new_node) 
         done;
 
         (* Publishing point: node is now visible to readers. *)
-        new_node.fully_linked := true;
+        Atomic.set new_node.fully_linked true;
 
         unlock_all locked;
         true
@@ -197,15 +197,15 @@ let remove t key =
       None
     else begin
       let candidate = succs.(level_found) in
-      if not !(candidate.fully_linked) || !(candidate.marked) then
+      if not (Atomic.get candidate.fully_linked) || (Atomic.get candidate.marked) then
         None
       else begin
         Mutex.lock candidate.lock;
-        if !(candidate.marked) then begin
+        if (Atomic.get candidate.marked) then begin
           Mutex.unlock candidate.lock;
           None
         end else begin
-          candidate.marked := true;
+          Atomic.set candidate.marked true;
           Mutex.unlock candidate.lock;
           Some candidate
         end
@@ -226,11 +226,11 @@ let remove t key =
       try
         for level = bottom_level to top do
           let pred = preds.(level) in
-          if !(pred.marked) then begin
+          if Atomic.get pred.marked then begin
             valid := false;
             raise Exit
           end;
-          match pred.next.(level) with
+          match Atomic.get pred.next.(level) with
           | Some n when n == victim -> ()
           | _ ->
               valid := false;
@@ -245,7 +245,7 @@ let remove t key =
     end else begin
       (* Physically unlink from top level down to level 0. *)
       for level = top downto bottom_level do
-        preds.(level).next.(level) <- victim.next.(level)
+        Atomic.set preds.(level).next.(level) (Atomic.get victim.next.(level))
       done;
 
       unlock_all locked;
