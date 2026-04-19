@@ -1,6 +1,5 @@
 module AMR = Atomic_markable_ref
 
-let bottom_level = 0
 
 type node = {
   key : int;
@@ -68,6 +67,7 @@ let make_node key top_level succs =
    also deletes marked nodes while traversing *)
 let find t key preds succs =
   let rec retry () =
+    let bottom_level=0 in
     let pred = ref t.head in
     let restart = ref false in
 
@@ -104,9 +104,7 @@ let find t key preds succs =
             end
             (* else curr.key >= key, stop this level *)
           end
-        in
-
-        scan ();
+        in scan ();
 
         if not !restart then begin
           preds.(level) <- !pred;
@@ -123,6 +121,7 @@ let find t key preds succs =
 (** [add s x] inserts key [x] into [s] if it is not already present.
     Returns [true] if [x] was added, and [false] if [x] was already present. *)
 let add t key =
+  let bottom_level=0 in
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
 
@@ -182,6 +181,7 @@ let add t key =
 (** [remove s x] removes key [x] from [s] if it is present.
     Returns [true] if [x] was removed, and [false] if [x] was not present. *)
 let remove t key =
+  let bottom_level=0 in
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
 
@@ -244,6 +244,7 @@ let remove t key =
 (** [contains s x] returns [true] if key [x] is present in [s],
     and [false] otherwise. *)
 let contains t key =
+  let bottom_level=0 in
   let pred = ref t.head in
   let curr = ref t.tail in
   let succ = ref t.tail in
