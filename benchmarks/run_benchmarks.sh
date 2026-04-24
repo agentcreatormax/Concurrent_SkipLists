@@ -10,8 +10,8 @@ mkdir -p "$RESULTS_DIR"
 DURATION=3.0
 RUNS=3
 MAX_LEVEL=16
-IMPLEMENTATIONS="finegrain lockfree"
-THREAD_COUNTS="1 2 4 8 12"
+IMPLEMENTATIONS="finegrain lockfree hashtbl"
+THREAD_COUNTS="1 2 4 6 8 10 12"
 
 echo "=== Starting Comprehensive List Benchmarks ==="
 echo "Duration: ${DURATION}s per run"

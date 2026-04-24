@@ -11,4 +11,7 @@
  (name finegrain_skiplist)
  (modules finegrain_skiplist))
 
+(library
+ (name coarsegrain_hashtbl)
+ (modules coarsegrain_hashtbl))
 

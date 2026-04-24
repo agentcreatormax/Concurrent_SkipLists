@@ -81,7 +81,7 @@ let run_benchmark impl_name num_threads contains_pct duration max_level initial_
   let module_of_name = function
     | "lockfree" -> (module Lockfree_skiplist : SKIPLIST)
     | "finegrain" -> (module Finegrain_skiplist : SKIPLIST)
-    (* | "hashtabl" -> (module Hashtabl : SKIPLIST) *)
+    | "hashtbl" -> (module Coarsegrain_hashtbl : SKIPLIST)
     | _ -> failwith "Unknown implementation"
   in
 

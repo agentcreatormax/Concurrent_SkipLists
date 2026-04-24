@@ -15,6 +15,7 @@ from pathlib import Path
 IMPL_STYLES = {
     'lockfree': {'label': 'Lock-free', 'marker': 's', 'color': 'black', 'linestyle': '--'},
     'finegrain': {'label': 'Fine-grained', 'marker': 'o', 'color': 'red', 'linestyle': '-'},
+    'hashtbl': {'label': 'Hashtbl(coarsegrain)', 'marker': 'v', 'color': 'blue', 'linestyle': '-.'},
 }
 
 def read_csv(filename):
@@ -39,7 +40,7 @@ def plot_thread_scaling(csv_file, title, output_file):
     fig, ax = plt.subplots(figsize=(8, 6))
 
     # Plot each implementation
-    for impl in ['finegrain', 'lockfree']:
+    for impl in ['finegrain', 'lockfree', 'hashtbl']:
         if impl in data:
             style = IMPL_STYLES[impl]
             threads = data[impl]['threads']
