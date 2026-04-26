@@ -117,7 +117,7 @@ let () =
   let contains = ref 90 in
   let duration = ref 2.0 in
   let initial_size = ref 1000 in
-  let max_level = ref 16 in
+  let max_level = ref 10 in
   let value_range = ref 10000 in
   let runs = ref 3 in
   let csv_output = ref None in
@@ -134,7 +134,7 @@ let () =
     ("--initial-size", Arg.Set_int initial_size,
      "Initial list size (default: 1000)");
     ("--max-level", Arg.Set_int max_level,
-     "Max levels in the skip list (default: 16)");
+     "Max levels in the skip list (default: 10)");
     ("--value-range", Arg.Set_int value_range,
      "Range of values [0, N) (default: 10000)");
     ("--runs", Arg.Set_int runs,

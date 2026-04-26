@@ -68,40 +68,40 @@ def plot_thread_scaling(csv_file, title, output_file):
     print(f"Saved {output_file}")
     plt.close()
 
-# def plot_contains_mix(csv_file, title, output_file):
-#     """Plot throughput vs contains percentage."""
-#     data = read_csv(csv_file)
+def plot_contains_mix(csv_file, title, output_file):
+    """Plot throughput vs contains percentage."""
+    data = read_csv(csv_file)
 
-#     fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(8, 6))
 
-#     # Plot each implementation
-#     for impl in ['finegrain', 'lockfree']:
-#         if impl in data:
-#             style = IMPL_STYLES[impl]
-#             contains_pct = data[impl]['contains_pct']
-#             throughput = data[impl]['median']
+    # Plot each implementation
+    for impl in ['finegrain', 'lockfree', 'hashtbl']:
+        if impl in data:
+            style = IMPL_STYLES[impl]
+            contains_pct = data[impl]['contains_pct']
+            throughput = data[impl]['median']
 
-#             ax.plot(contains_pct, throughput,
-#                    marker=style['marker'],
-#                    color=style['color'],
-#                    linestyle=style['linestyle'],
-#                    markersize=8,
-#                    linewidth=2,
-#                    label=style['label'])
+            ax.plot(contains_pct, throughput,
+                   marker=style['marker'],
+                   color=style['color'],
+                   linestyle=style['linestyle'],
+                   markersize=8,
+                   linewidth=2,
+                   label=style['label'])
 
-#     ax.set_xlabel('% Contains()', fontsize=12)
-#     ax.set_ylabel('Ops/sec', fontsize=12)
-#     ax.set_title(title, fontsize=14, fontweight='bold')
-#     ax.legend(loc='upper left', fontsize=10)
-#     ax.grid(True, alpha=0.3)
+    ax.set_xlabel('% Contains()', fontsize=12)
+    ax.set_ylabel('Ops/sec', fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.legend(loc='upper left', fontsize=10)
+    ax.grid(True, alpha=0.3)
 
-#     # Format y-axis with scientific notation
-#     ax.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
+    # Format y-axis with scientific notation
+    ax.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
 
-#     plt.tight_layout()
-#     plt.savefig(output_file, dpi=300, bbox_inches='tight')
-#     print(f"Saved {output_file}")
-#     plt.close()
+    plt.tight_layout()
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    print(f"Saved {output_file}")
+    plt.close()
 
 def main():
     # Get script directory and construct results path relative to it
@@ -146,6 +146,17 @@ def main():
         )
     else:
         print(f"Warning: {write_heavy_csv} not found")
+
+    # Plot 4: Varying Contains Ratio
+    varying_csv = results_dir / 'varying_contains.csv'
+    if varying_csv.exists():
+        plot_contains_mix(
+            varying_csv,
+            'Varing Contains',
+            results_dir / 'plot_varying_contains.png'
+        )
+    else:
+        print(f"Warning: {varying_csv} not found")
 
     print("\nAll plots generated successfully!")
 
