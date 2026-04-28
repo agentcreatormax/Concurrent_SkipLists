@@ -67,7 +67,7 @@ let test_sequential_many () =
   for i = 1 to n do assert_bool (not (S.contains s i)) (Printf.sprintf "gone %d" i) done;
   printf "PASS: sequential many\n"
 
-let test_readd_after_remove () =
+let test_read_after_remove () =
   let s = S.create 4 in
   assert_bool (S.add s 99)            "first add";
   assert_bool (S.remove s 99)         "remove";
@@ -230,7 +230,7 @@ let test_concurrent_add_remove_race () =
   printf "PASS: concurrent add/remove same-key race\n"
 
 (** Re-add while remove is in flight: no crash, contains stays consistent. *)
-let test_readd_during_remove () =
+let test_read_during_remove () =
   let s = S.create 8 in
   for _ = 1 to 100 do
     ignore (S.add s 13);
