@@ -173,7 +173,7 @@ let add t key =
               then
                 ()
               else begin
-                (* level changed, refresh preds/succs and retrfind t key preds succsy this level *)
+                (* level changed, refresh preds/succs and retry this level *)
                 let (_, count_m) = find t key preds succs in
                 count := !count + count_m;
                 splice ()
