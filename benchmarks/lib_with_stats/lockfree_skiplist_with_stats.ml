@@ -77,12 +77,10 @@ let find t key preds succs =
       if not !restart then begin
         let marked = ref false in
         let curr = ref (AMR.get_reference ((!pred).next.(level))) in
-        incr count;
 
         let rec scan () =
           (* if not !restart then begin *)
             let succ = AMR.get ((!curr).next.(level)) marked in
-            incr count;
 
             if !marked then begin
               (* curr is marked, try to unlink it *)
@@ -106,6 +104,7 @@ let find t key preds succs =
               (* move right *)
               pred := !curr;
               curr := succ;
+              incr count;
               scan ()
             end
             (* else curr.key >= key, stop this level *)
@@ -160,7 +159,6 @@ let add t key =
           let rec splice () =
             let marked = ref false in
             ignore (AMR.get new_node.next.(bottom_level) marked);
-            incr count;
 
             if !marked then
               (* node already got removed, stop linking upper levels *)
@@ -214,7 +212,6 @@ let remove t key =
         let marked = ref false in
         let rec mark_level () =
           let succ = AMR.get node_to_remove.next.(level) marked in
-          incr count;
           if not !marked then begin
             ignore
               (AMR.compare_and_set node_to_remove.next.(level)
@@ -222,7 +219,6 @@ let remove t key =
                  ~expected_mark:false ~new_mark:true);
             (* reread mark; retry till this level gets marked *)
             ignore (AMR.get node_to_remove.next.(level) marked);
-            incr count; 
 
             if not !marked then mark_level ()
           end
@@ -237,7 +233,6 @@ let remove t key =
          which is the same cell).  This ensures succ is never stale on retry. *)
       let marked = ref false in
       let succ = ref (AMR.get node_to_remove.next.(bottom_level) marked) in
-      incr count;
 
       let rec mark_bottom () =
         let i_marked_it =
@@ -247,7 +242,7 @@ let remove t key =
         in
         (* refresh succ + mark so the next iteration uses the latest pointer *)
         succ := AMR.get node_to_remove.next.(bottom_level) marked;
-        incr count;
+       
 
         if i_marked_it then begin
           (* help cleanup *)
@@ -280,11 +275,9 @@ let contains t key =
 
   for level = t.max_level downto bottom_level do
     curr := AMR.get_reference ((!pred).next.(level));
-    incr count;
 
     let rec scan () =
       succ := AMR.get ((!curr).next.(level)) marked;
-      incr count;
 
       let rec skip_marked () =
         if !marked then begin
@@ -292,7 +285,6 @@ let contains t key =
           curr := !succ;
           succ := AMR.get ((!curr).next.(level)) marked;
           incr count;
-
           skip_marked ()
         end
       in
@@ -302,6 +294,7 @@ let contains t key =
       if (!curr).key < key then begin
         pred := !curr;
         curr := !succ;
+        incr count;
         scan ()
       end
        (* else curr.key >= key, go one level down *)
