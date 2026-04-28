@@ -11,7 +11,7 @@ DURATION=3.0
 RUNS=3
 MAX_LEVEL=16
 IMPLEMENTATIONS="finegrain lockfree hashtbl"
-THREAD_COUNTS="1 2 4 6 8 10 12"
+THREAD_COUNTS="1 2 4 6 8 10 11"
 
 echo "=== Starting Comprehensive List Benchmarks ==="
 echo "Duration: ${DURATION}s per run"
@@ -112,6 +112,26 @@ for impl in $IMPLEMENTATIONS; do
       --runs "$RUNS" \
       --csv "$CSV_FILE" \
       2>&1 | tail -1
+  done
+done
+
+RUNS=1000
+IMPLEMENTATIONS="finegrain lockfree"
+# Experiment 5: Avg traversal length with equal ratios
+echo "Experiment 5: Avg traversal length with equal ratios"
+CSV_FILE="$RESULTS_DIR/avg_lengths_with_equal_ratios.csv"
+rm -f "$CSV_FILE"
+echo "impl,threads,max_level,contains_pct,avg_contains,avg_add,avg_remove" > "$CSV_FILE"
+for impl in $IMPLEMENTATIONS; do
+  for threads in $THREAD_COUNTS; do
+    echo "  Running $impl with $threads..."
+    dune exec benchmarks/benchmark_traversal_length.exe -- \
+    --impl "$impl" \
+    --threads "$threads" \
+    --contains 34 \
+    --runs "$RUNS" \
+    --csv "$CSV_FILE" \
+    2>&1 | tail -1
   done
 done
 

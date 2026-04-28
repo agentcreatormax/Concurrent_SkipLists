@@ -3,3 +3,9 @@
  (modules benchmark_skiplist)
  (libraries lockfree_skiplist finegrain_skiplist coarsegrain_hashtbl unix)
  (ocamlopt_flags (:standard -O3 -inline 100))) 
+
+(executable
+ (name benchmark_traversal_length)
+ (modules benchmark_traversal_length)
+ (libraries lockfree_skiplist_with_stats finegrain_skiplist_with_stats unix)
+ (ocamlopt_flags (:standard -O3 -inline 100))) 

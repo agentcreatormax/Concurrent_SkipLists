@@ -1,0 +1,8 @@
+(library
+ (name finegrain_skiplist_with_stats)
+ (modules finegrain_skiplist_with_stats))
+
+(library
+ (name lockfree_skiplist_with_stats)
+ (modules lockfree_skiplist_with_stats)
+ (libraries atomic_markable_ref))
