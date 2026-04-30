@@ -271,7 +271,7 @@ def main():
         }
     ]
     
-    length_csv = csv_dir / 'avg_lengths_heavy_writing.csv'
+    length_csv = csv_dir / 'avg_lengths_with_heavy_writing.csv'
     if length_csv.exists():
         for plot_config in traversal_plots:
             plot_thread_scaling_traversal(
