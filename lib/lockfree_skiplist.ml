@@ -69,16 +69,13 @@ let find t key preds succs =
   let rec retry () =
     let bottom_level=0 in
     let pred = ref t.head in
-    let restart = ref false in
 
-    (* try { *)
+    try 
     for level = t.max_level downto bottom_level do
-      if not !restart then begin
         let marked = ref false in
         let curr = ref (AMR.get_reference ((!pred).next.(level))) in
 
         let rec scan () =
-          if not !restart then begin
             let succ = AMR.get ((!curr).next.(level)) marked in
 
             if !marked then begin
@@ -90,8 +87,7 @@ let find t key preds succs =
               in
               if not delete then
                 (* CAS failed, something changed, restart whole find *)
-                restart := true
-                  (* raise Exit *)
+                raise Exit
               else begin
                 (* delete worked, reread curr from pred *)
                 curr := AMR.get_reference ((!pred).next.(level));
@@ -105,20 +101,14 @@ let find t key preds succs =
               scan ()
             end
             (* else curr.key >= key, stop this level *)
-          end
         in scan ();
 
-        if not !restart then begin
-          preds.(level) <- !pred;
-          succs.(level) <- !curr
-        end
-      end
+        preds.(level) <- !pred;
+        succs.(level) <- !curr
     done;
 
-    if !restart then retry ()
-    else 
     succs.(bottom_level).key = key 
-    (* with Exit -> retry()  *)
+    with Exit -> retry() 
     
   in
   retry ()
