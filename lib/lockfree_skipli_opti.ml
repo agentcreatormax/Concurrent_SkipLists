@@ -66,11 +66,14 @@ let make_node key top_level succs =
    fills preds[level] and succs[level]
    also deletes marked nodes while traversing *)
 let find t key preds succs =
+  let pred = ref t.head in
+  let marked = ref false in
+  let curr = ref t.head in
+
   let rec retry () =
     let bottom_level=0 in
-    let pred = ref t.head in
-    let marked = ref false in
-    let curr = ref t.head in
+    pred := t.head; 
+    marked := false;
 
     try 
     for level = t.max_level downto bottom_level do
