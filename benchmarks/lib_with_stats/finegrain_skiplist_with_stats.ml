@@ -98,7 +98,6 @@ let lock_unique_sorted preds top_level =
 
 let unlock_all nodes =
   List.iter (fun n -> Mutex.unlock n.lock) nodes
-
 (* ------------------------------------------------------------------ *)
 (* contains  -- no locks                                                *)
 (* ------------------------------------------------------------------ *)

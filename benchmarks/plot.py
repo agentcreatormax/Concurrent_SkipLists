@@ -158,90 +158,161 @@ def main():
     # Get script directory and construct results path relative to it
     script_dir = Path(__file__).parent.absolute()
     results_dir = script_dir.parent / 'results'
+    csv_dir = results_dir / 'csv'
+    throughput_dir = results_dir / 'throughput_plots'
+    throughput_dir.mkdir(parents=True, exist_ok=True)
 
     if not results_dir.exists():
         print(f"Error: Results directory not found: {results_dir}")
+        return
+    
+    if not csv_dir.exists():
+        print(f"Error: csv directory not found: {csv_dir}")
         return
 
     print("Generating plots...")
 
     # Plot 1: High Contains Ratio
-    high_csv = results_dir / 'high_contains.csv'
+    high_csv = csv_dir / 'high_contains.csv'
     if high_csv.exists():
         plot_thread_scaling(
             high_csv,
             'High Contains Ratio (90%)',
-            results_dir / 'plot_high_contains.png'
+            throughput_dir / 'plot_high_contains.png'
         )
     else:
         print(f"Warning: {high_csv} not found")
 
     # Plot 2: Equal Ratios
-    equal_csv = results_dir / 'equal_ratios.csv'
+    equal_csv = csv_dir / 'equal_ratios.csv'
     if equal_csv.exists():
         plot_thread_scaling(
             equal_csv,
             'Equal Ratios (34% contains / 33% add / 33% remove)',
-            results_dir / 'plot_equal_ratios.png'
+            throughput_dir / 'plot_equal_ratios.png'
         )
     else:
         print(f"Warning: {equal_csv} not found")
 
     # Plot 3: Write Heavy
-    write_heavy_csv = results_dir / 'write_heavy.csv'
+    write_heavy_csv = csv_dir / 'write_heavy.csv'
     if write_heavy_csv.exists():
         plot_thread_scaling(
             write_heavy_csv,
             'Write Heavy Ratio (10% contains / 45% add / 45% remove)',
-            results_dir / 'plot_write_heavy.png'
+            throughput_dir / 'plot_write_heavy.png'
         )
     else:
         print(f"Warning: {write_heavy_csv} not found")
 
     # Plot 4: Varying Contains Ratio
-    varying_csv = results_dir / 'varying_contains.csv'
+    varying_csv = csv_dir / 'varying_contains.csv'
     if varying_csv.exists():
         plot_contains_mix(
             varying_csv,
             'Varing Contains',
-            results_dir / 'plot_varying_contains.png'
+            throughput_dir / 'plot_varying_contains.png'
         )
     else:
         print(f"Warning: {varying_csv} not found")
 
-    # Plot 5: Contains traversal length (equal ratios)
-    length_csv = results_dir / 'avg_lengths_with_equal_ratios.csv'
+    # Plots 5-7: Traversal lengths for different operations (equal ratios)
+    traversal_dir = results_dir / 'traversal_length-equal_ratios'
+    traversal_dir.mkdir(parents=True, exist_ok=True)
+    traversal_plots = [
+        {
+            'length_type': 'avg_contains',
+            'title': 'Avg traversal length in Contains op with Equal ratios',
+            'output_file': 'plot_avg_contains_length.png'
+        },
+        {
+            'length_type': 'avg_add',
+            'title': 'Avg traversal length in Add op with Equal ratios',
+            'output_file': 'plot_avg_add_length.png'
+        },
+        {
+            'length_type': 'avg_remove',
+            'title': 'Avg traversal length in Remove op with Equal ratios',
+            'output_file': 'plot_avg_remove_length.png'
+        }
+    ]
+    
+    length_csv = csv_dir / 'avg_lengths_with_equal_ratios.csv'
     if length_csv.exists():
-        plot_thread_scaling_traversal(
-            length_csv,
-            'Avg traversal length in Contains op with Equal ratios',
-            results_dir / 'plot_avg_contains_length.png',
-            'avg_contains'
-        )
+        for plot_config in traversal_plots:
+            plot_thread_scaling_traversal(
+                length_csv,
+                plot_config['title'],
+                traversal_dir / plot_config['output_file'],
+                plot_config['length_type']
+            )
     else:
         print(f"Warning: {length_csv} not found")
 
-    # Plot 6: Add traversal length (equal ratios)
-    length_csv = results_dir / 'avg_lengths_with_equal_ratios.csv'
+    # Plots 8-10: Traversal lengths for different operations (heavy writing)
+    traversal_dir = results_dir / 'traversal_length-heavy_writing'
+    traversal_dir.mkdir(parents=True, exist_ok=True)
+
+    traversal_plots = [
+        {
+            'length_type': 'avg_contains',
+            'title': 'Avg traversal length in Contains op with Heavy Writing',
+            'output_file': 'plot_avg_contains_length.png'
+        },
+        {
+            'length_type': 'avg_add',
+            'title': 'Avg traversal length in Add op with Heavy Writing',
+            'output_file': 'plot_avg_add_length.png'
+        },
+        {
+            'length_type': 'avg_remove',
+            'title': 'Avg traversal length in Remove op with Heavy Writing',
+            'output_file': 'plot_avg_remove_length.png'
+        }
+    ]
+    
+    length_csv = csv_dir / 'avg_lengths_heavy_writing.csv'
     if length_csv.exists():
-        plot_thread_scaling_traversal(
-            length_csv,
-            'Avg traversal length in Add op with Equal ratios',
-            results_dir / 'plot_avg_add_length.png',
-            'avg_add'
-        )
+        for plot_config in traversal_plots:
+            plot_thread_scaling_traversal(
+                length_csv,
+                plot_config['title'],
+                traversal_dir / plot_config['output_file'],
+                plot_config['length_type']
+            )
     else:
         print(f"Warning: {length_csv} not found")
+
+    # Plots 11-13: Traversal lengths for different operations (heavy reading)
+    traversal_dir = results_dir / 'traversal_length-heavy_reading'
+    traversal_dir.mkdir(parents=True, exist_ok=True)
+    traversal_plots = [
+        {
+            'length_type': 'avg_contains',
+            'title': 'Avg traversal length in Contains op with Heavy Reading',
+            'output_file': 'plot_avg_contains_length.png'
+        },
+        {
+            'length_type': 'avg_add',
+            'title': 'Avg traversal length in Add op with Heavy Reading',
+            'output_file': 'plot_avg_add_length.png'
+        },
+        {
+            'length_type': 'avg_remove',
+            'title': 'Avg traversal length in Remove op with Heavy Reading',
+            'output_file': 'plot_avg_remove_length.png'
+        }
+    ]
     
-    # Plot 7: Remove traversal length (equal ratios)
-    length_csv = results_dir / 'avg_lengths_with_equal_ratios.csv'
+    length_csv = csv_dir / 'avg_lengths_with_heavy_reading.csv'
     if length_csv.exists():
-        plot_thread_scaling_traversal(
-            length_csv,
-            'Avg traversal length in Remove op with Equal ratios',
-            results_dir / 'plot_remove_contains_length.png',
-            'avg_remove'
-        )
+        for plot_config in traversal_plots:
+            plot_thread_scaling_traversal(
+                length_csv,
+                plot_config['title'],
+                traversal_dir / plot_config['output_file'],
+                plot_config['length_type']
+            )
     else:
         print(f"Warning: {length_csv} not found")
 

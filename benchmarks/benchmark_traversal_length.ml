@@ -68,8 +68,9 @@ let benchmark_list
         add_sum := !add_sum + count
       else
         let (_, count) = SL.remove list value in
-        remove_sum := !remove_sum + count;
-        incr remove_count);
+        incr remove_count;
+        remove_sum := !remove_sum + count
+        );
 
       incr cur_runs
     done;
