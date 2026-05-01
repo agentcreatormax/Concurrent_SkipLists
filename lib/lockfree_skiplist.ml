@@ -13,8 +13,10 @@ type t = {
   max_level : int;
 }
 
-(* returns a random level in [0, max_level - 1]
-   head and tail alone stay at full height *)
+(* Returns a random top level for ordinary nodes.
+   For max_level > 0, ordinary nodes use levels in [0, max_level - 1].
+   For max_level = 0, the structure degenerates to a single-level list.
+   Head and tail are created with full height [max_level]. *)
 let random_level max_level =
   let rec loop lvl bits =
     if lvl >= max_level - 1 then lvl
@@ -23,13 +25,15 @@ let random_level max_level =
   in
   loop 0 (Random.bits ())
 
-(** [create max_level] creates an empty lock-free skip list with maximum level
-    [max_level].
+(* [create max_level] creates an empty lock-free skip list.
+    [max_level = 0] gives a single-level list.
     @raise Invalid_argument if [max_level < 0] *)
 let create max_level =
   if max_level < 0 then
     invalid_arg "max_level must be non-negative"
   else
+    (* Temporary placeholder used only to allocate tail.next.
+   It is immediately replaced by tail itself *)
     let dummy_ref = Obj.magic () in
     let tail = {
       key = max_int;
@@ -61,10 +65,11 @@ let make_node key top_level succs =
     next =
       Array.init (top_level + 1) (fun level -> AMR.create succs.(level) false);
   }
-
-(* find position of key
-   fills preds[level] and succs[level]
-   also deletes marked nodes while traversing *)
+  
+(* Finds the position of [key].
+   Fills preds[level] and succs[level].
+   Also helps physically unlink nodes whose outgoing link at that level
+   is already marked. *)
 let find t key preds succs =
   let pred = ref t.head in
   (* moved allocations outside retry *)
@@ -85,7 +90,8 @@ let find t key preds succs =
             let succ = AMR.get ((!curr).next.(level)) marked in
 
             if !marked then begin
-              (* curr is marked, try to unlink it *)
+              (* curr's next pointer at this level is marked, so curr is logically
+               deleted at this level; try to unlink it from pred. *)
               let delete =
                 AMR.compare_and_set ((!pred).next.(level))
                   ~expected_ref:!curr ~new_ref:succ
@@ -147,10 +153,13 @@ let add t key =
         Domain.cpu_relax ();
         attempt ())
       else begin
-        (* bottom-level CAS is the add linearization point *)
+        (* Successful bottom-level CAS is the linearization point of add:
+         from this point the key is in the abstract set. *)
         node_marked := false;
         level := (bottom_level + 1);
-
+        (* Link higher levels after level 0.
+         These levels are only shortcuts; if the node is removed meanwhile,
+         stop trying to link them. *)
         while !level <= top_level && not !node_marked do
           let rec splice () =
             marked := false;
@@ -217,11 +226,9 @@ let remove t key =
         mark_level ()
       done;
 
-      (* bottom level mark is the linearization point of a successful remove.
-         We read the current succ from node_to_remove.next[0] before the CAS,
-         then refresh it afterwards (matching Java's
-           succ = succs[0].next[0].get(marked)
-         which is the same cell).  This ensures succ is never stale on retry. *)
+      (* Marking level 0 is the linearization point of a successful remove.
+       After every CAS attempt, refresh both succ and mark so retries never
+       use a stale successor. *)
       marked := false;
       let succ = ref (AMR.get node_to_remove.next.(bottom_level) marked) in
       let rec mark_bottom () =
@@ -266,7 +273,8 @@ let contains t key =
 
       let rec skip_marked () =
         if !marked then begin
-          (* jump over marked nodes *)
+          (* Read-only traversal: contains does not help unlink marked nodes.
+             It only skips marked nodes locally, so it performs no CAS and takes no locks. *)
           curr := !succ;
           succ := AMR.get ((!curr).next.(level)) marked;
           skip_marked ()
