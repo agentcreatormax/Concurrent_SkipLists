@@ -102,6 +102,10 @@ let run_benchmark impl_name num_threads contains_pct max_level initial_size valu
   Printf.printf "Running %s with %d threads, %d%% contains...\n%!"
     impl_name num_threads contains_pct;
 
+  (* warm up run *)
+  let warmup_runs = 1000 in
+  benchmark_list impl_module ~num_threads ~runs:warmup_runs ~contains_pct ~initial_size ~value_range ~max_level;
+
   benchmark_list impl_module ~num_threads ~runs ~contains_pct ~initial_size ~value_range ~max_level;
 
   (* Calculate statistics *)

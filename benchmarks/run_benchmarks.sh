@@ -13,7 +13,7 @@ DURATION=2.0
 RUNS=3
 MAX_LEVEL=13
 IMPLEMENTATIONS="finegrain lockfree hashtbl"
-THREAD_COUNTS="1 2 4 6 8 10 12 13 14 15"
+THREAD_COUNTS="1 2 4 6 8 10 12 14 15 16"
 
 echo "=== Starting Comprehensive List Benchmarks ==="
 echo "Duration: ${DURATION}s per run"

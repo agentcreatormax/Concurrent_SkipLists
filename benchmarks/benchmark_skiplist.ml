@@ -14,6 +14,7 @@ end
 
 (* Atomic counter for total operations *)
 let total_ops = Atomic.make 0
+let warmup_runs = 1
 
 let benchmark_list
     (module SL : SKIPLIST)
@@ -90,6 +91,16 @@ let run_benchmark impl_name num_threads contains_pct duration max_level initial_
 
   Printf.printf "Running %s with %d threads, %d%% contains...\n%!"
     impl_name num_threads contains_pct;
+
+  for warmup = 1 to warmup_runs do
+    Printf.printf "  Warm-up %d/%d... %!" warmup warmup_runs;
+    ignore (
+      benchmark_list impl_module ~num_threads ~duration_sec:duration
+        ~contains_pct ~max_level ~initial_size ~value_range
+    )
+  done;
+
+  if warmup_runs > 0 then Gc.compact ();
 
   for run = 1 to runs do
     Printf.printf "  Run %d/%d... %!" run runs;
