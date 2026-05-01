@@ -68,15 +68,18 @@ let make_node key top_level succs =
 let find t key preds succs =
   let count = ref 0 in
   let pred = ref t.head in
+  let marked = ref false in
+  let curr = ref t.head in
 
-  try
   let rec retry () =
     let bottom_level=0 in
     pred := t.head;
+    marked := false;
 
+    try
     for level = t.max_level downto bottom_level do
-        let marked = ref false in
-        let curr = ref (AMR.get_reference ((!pred).next.(level))) in
+        marked := false;
+        curr := (AMR.get_reference ((!pred).next.(level)));
 
         let rec scan () =
             let succ = AMR.get ((!curr).next.(level)) marked in
@@ -88,7 +91,6 @@ let find t key preds succs =
                   ~expected_ref:!curr ~new_ref:succ
                   ~expected_mark:false ~new_mark:false
               in
-
               if not delete then
                 (* CAS failed, something changed, restart whole find *)
                 raise Exit
@@ -115,7 +117,8 @@ let find t key preds succs =
     done;
 
     succs.(bottom_level).key = key
-    with Exit -> retry ()
+    with Exit -> (Domain.cpu_relax(); retry())
+
   in
   let output = retry () in
   (output, !count)
@@ -147,9 +150,10 @@ let add t key =
       if not (AMR.compare_and_set pred.next.(bottom_level)
                 ~expected_ref:succ ~new_ref:new_node
                 ~expected_mark:false ~new_mark:false)
-      then
+      then (
         (* bottom level insert failed, retry *)
-        attempt ()
+        Domain.cpu_relax ();
+        attempt ())
       else begin
         (* bottom-level CAS is the add linearization point *)
         node_marked := false;

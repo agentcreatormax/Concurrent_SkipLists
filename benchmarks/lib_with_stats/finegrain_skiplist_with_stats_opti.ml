@@ -133,8 +133,7 @@ let add t key =
       if not (Atomic.get (node_found.marked)) then begin
         (* Wait until the existing node becomes fully visible.
            This is optimistic waiting, not locking. *)
-        while not (Atomic.get (node_found.fully_linked))
-           && not (Atomic.get (node_found.marked)) do
+        while not (Atomic.get (node_found.fully_linked)) do
           Domain.cpu_relax ()
         done;
         if (Atomic.get (node_found.marked)) then

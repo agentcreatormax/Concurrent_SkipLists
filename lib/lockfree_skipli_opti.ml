@@ -67,6 +67,7 @@ let make_node key top_level succs =
    also deletes marked nodes while traversing *)
 let find t key preds succs =
   let pred = ref t.head in
+  (* moved allocations outside retry *)
   let marked = ref false in
   let curr = ref t.head in
 
@@ -113,7 +114,7 @@ let find t key preds succs =
     done;
 
     succs.(bottom_level).key = key 
-    with Exit -> retry() 
+    with Exit -> (Domain.cpu_relax(); retry()) 
     
   in
   retry ()
@@ -124,6 +125,7 @@ let add t key =
   let bottom_level=0 in
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
+  (* moved allocations outside retry *)
   let node_marked = ref false in
   let level = ref (bottom_level + 1) in
   let marked = ref false in
@@ -140,9 +142,10 @@ let add t key =
       if not (AMR.compare_and_set pred.next.(bottom_level)
                 ~expected_ref:succ ~new_ref:new_node
                 ~expected_mark:false ~new_mark:false)
-      then
+      then (
         (* bottom level insert failed, retry *)
-        attempt ()
+        Domain.cpu_relax ();
+        attempt ())
       else begin
         (* bottom-level CAS is the add linearization point *)
         node_marked := false;

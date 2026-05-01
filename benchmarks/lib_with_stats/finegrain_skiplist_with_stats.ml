@@ -67,7 +67,6 @@ let find t key preds succs =
 
   for level = t.max_level downto bottom_level do
     let curr = ref (Option.get (Atomic.get !pred.next.(level))) in
-    incr count;
     while !curr.key < key do
       pred := !curr;
       curr := Option.get (Atomic.get !curr.next.(level));
