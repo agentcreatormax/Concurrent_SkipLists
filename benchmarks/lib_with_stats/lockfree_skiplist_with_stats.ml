@@ -67,15 +67,19 @@ let make_node key top_level succs =
    also deletes marked nodes while traversing *)
 let find t key preds succs =
   let count = ref 0 in
+  let pred = ref t.head in
+  let marked = ref false in
+  let curr = ref t.head in
 
   let rec retry () =
     let bottom_level=0 in
-    let pred = ref t.head in
+    pred := t.head;
+    marked := false;
 
-    try 
+    try
     for level = t.max_level downto bottom_level do
-        let marked = ref false in
-        let curr = ref (AMR.get_reference ((!pred).next.(level))) in
+        marked := false;
+        curr := (AMR.get_reference ((!pred).next.(level)));
 
         let rec scan () =
             let succ = AMR.get ((!curr).next.(level)) marked in
@@ -89,7 +93,7 @@ let find t key preds succs =
               in
               if not delete then
                 (* CAS failed, something changed, restart whole find *)
-                  raise Exit
+                raise Exit
               else begin
                 (* delete worked, reread curr from pred *)
                 curr := AMR.get_reference ((!pred).next.(level));
@@ -104,15 +108,17 @@ let find t key preds succs =
               incr count;
               scan ()
             end
+            (* else curr.key >= key, stop this level *)
+          (* end *)
         in scan ();
 
         preds.(level) <- !pred;
         succs.(level) <- !curr
     done;
-    
-    succs.(bottom_level).key = key 
-    with Exit -> retry() 
-    
+
+    succs.(bottom_level).key = key
+    with Exit -> (Domain.cpu_relax(); retry())
+
   in
   let output = retry () in
   (output, !count)
@@ -124,6 +130,10 @@ let add t key =
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
   let count = ref 0 in
+
+  let node_marked = ref false in
+  let level = ref (bottom_level + 1) in
+  let marked = ref false in
 
   let rec attempt () =
     let (bool_val, count_m) = find t key preds succs in
@@ -140,17 +150,18 @@ let add t key =
       if not (AMR.compare_and_set pred.next.(bottom_level)
                 ~expected_ref:succ ~new_ref:new_node
                 ~expected_mark:false ~new_mark:false)
-      then
+      then (
         (* bottom level insert failed, retry *)
-        attempt ()
+        Domain.cpu_relax ();
+        attempt ())
       else begin
         (* bottom-level CAS is the add linearization point *)
-        let node_marked = ref false in
-        let level = ref (bottom_level + 1) in
+        node_marked := false;
+        level := (bottom_level + 1);
 
         while !level <= top_level && not !node_marked do
           let rec splice () =
-            let marked = ref false in
+            marked := false;
             ignore (AMR.get new_node.next.(bottom_level) marked);
 
             if !marked then
@@ -190,6 +201,7 @@ let remove t key =
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
   let count = ref 0 in
+  let marked = ref false in
 
   let attempt () =
     let (bool_val, count_) = find t key preds succs in
@@ -202,7 +214,7 @@ let remove t key =
 
       (* mark upper levels first *)
       for level = node_to_remove.top_level downto bottom_level + 1 do
-        let marked = ref false in
+        marked := false;
         let rec mark_level () =
           let succ = AMR.get node_to_remove.next.(level) marked in
           if not !marked then begin
@@ -224,7 +236,7 @@ let remove t key =
          then refresh it afterwards (matching Java's
            succ = succs[0].next[0].get(marked)
          which is the same cell).  This ensures succ is never stale on retry. *)
-      let marked = ref false in
+      marked := false;
       let succ = ref (AMR.get node_to_remove.next.(bottom_level) marked) in
 
       let rec mark_bottom () =

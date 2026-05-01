@@ -122,9 +122,9 @@ let () =
   let impl = ref "lockfree" in
   let threads = ref 4 in
   let contains = ref 90 in
-  let initial_size = ref 1000 in
+  let initial_size = ref 100 in
   let max_level = ref 10 in
-  let value_range = ref 10000 in
+  let value_range = ref 100 in
   let runs = ref 1000 in
   let csv_output = ref None in
 

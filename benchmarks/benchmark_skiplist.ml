@@ -116,9 +116,9 @@ let () =
   let threads = ref 4 in
   let contains = ref 90 in
   let duration = ref 2.0 in
-  let initial_size = ref 1000 in
+  let initial_size = ref 100 in
   let max_level = ref 10 in
-  let value_range = ref 10000 in
+  let value_range = ref 100 in
   let runs = ref 3 in
   let csv_output = ref None in
 

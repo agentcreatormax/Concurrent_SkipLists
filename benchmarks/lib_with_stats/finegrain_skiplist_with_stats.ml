@@ -64,9 +64,11 @@ let find t key preds succs =
   let count = ref 0 in
   let found = ref (-1) in
   let pred  = ref t.head in
+  let curr = ref t.head in
 
   for level = t.max_level downto bottom_level do
-    let curr = ref (Option.get (Atomic.get !pred.next.(level))) in
+    curr := (Option.get (Atomic.get !pred.next.(level)));
+    incr count;
     while !curr.key < key do
       pred := !curr;
       curr := Option.get (Atomic.get !curr.next.(level));
@@ -119,6 +121,7 @@ let add t key =
   let preds = Array.make (t.max_level + 1) t.head in
   let succs = Array.make (t.max_level + 1) t.tail in
   let count = ref 0 in
+  let valid = ref true in
 
   let rec attempt () =
     let (level_found, count_) = find t key preds succs in
@@ -130,8 +133,7 @@ let add t key =
       if not (Atomic.get (node_found.marked)) then begin
         (* Wait until the existing node becomes fully visible.
            This is optimistic waiting, not locking. *)
-        while not (Atomic.get (node_found.fully_linked))
-           && not (Atomic.get (node_found.marked)) do
+        while not (Atomic.get (node_found.fully_linked)) do
           Domain.cpu_relax ()
         done;
         if (Atomic.get (node_found.marked)) then
@@ -147,7 +149,7 @@ let add t key =
       (* Validate that:
          - none of the locked predecessors got marked
          - each pred still points to the same succ we found earlier *)
-      let valid = ref true in
+      valid := true;
       begin
         try
           for level = bottom_level to top_level do
