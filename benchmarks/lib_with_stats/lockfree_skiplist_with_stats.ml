@@ -86,6 +86,7 @@ let find t key preds succs =
 
             if !marked then begin
               (* curr is marked, try to unlink it *)
+              incr count;
               let delete =
                 AMR.compare_and_set ((!pred).next.(level))
                   ~expected_ref:!curr ~new_ref:succ
@@ -97,7 +98,6 @@ let find t key preds succs =
               else begin
                 (* delete worked, reread curr from pred *)
                 curr := AMR.get_reference ((!pred).next.(level));
-                incr count;
                 scan ()
               end
             end
@@ -170,6 +170,7 @@ let add t key =
             else begin
               let pred = preds.(!level) in
               let succ = succs.(!level) in
+              incr count;
 
               if AMR.compare_and_set pred.next.(!level)
                    ~expected_ref:succ ~new_ref:new_node
@@ -217,6 +218,8 @@ let remove t key =
         marked := false;
         let rec mark_level () =
           let succ = AMR.get node_to_remove.next.(level) marked in
+          incr count;
+
           if not !marked then begin
             ignore
               (AMR.compare_and_set node_to_remove.next.(level)
@@ -247,7 +250,7 @@ let remove t key =
         in
         (* refresh succ + mark so the next iteration uses the latest pointer *)
         succ := AMR.get node_to_remove.next.(bottom_level) marked;
-       
+        incr count;
 
         if i_marked_it then begin
           (* help cleanup *)

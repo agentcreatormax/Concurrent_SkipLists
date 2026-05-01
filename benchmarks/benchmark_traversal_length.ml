@@ -123,9 +123,9 @@ let () =
   let threads = ref 4 in
   let contains = ref 90 in
   let initial_size = ref 100 in
-  let max_level = ref 10 in
+  let max_level = ref 16 in
   let value_range = ref 100 in
-  let runs = ref 1000 in
+  let runs = ref 100000 in
   let csv_output = ref None in
 
   let speclist = [

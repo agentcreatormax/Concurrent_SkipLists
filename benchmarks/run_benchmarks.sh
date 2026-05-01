@@ -117,8 +117,9 @@ for impl in $IMPLEMENTATIONS; do
   done
 done
 
-RUNS=1000000
+RUNS=100000
 IMPLEMENTATIONS="finegrain lockfree"
+THREAD_COUNTS="1 2 4 6 8 10 12 14 16 18 20 22 24"
 # Experiment 5: Avg traversal length with equal ratios
 echo "Experiment 5: Avg traversal length with equal ratios"
 CSV_FILE="$CSV_DIR/avg_lengths_with_equal_ratios.csv"

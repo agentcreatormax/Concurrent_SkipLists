@@ -132,9 +132,10 @@ let add t key =
         while not (Atomic.get (node_found.fully_linked)) do
           Domain.cpu_relax ()
         done;
-        if (Atomic.get (node_found.marked)) then
+        if (Atomic.get (node_found.marked)) then (
+          Domain.cpu_relax ();
           attempt ()   (* node vanished while we waited, retry *)
-        else
+        ) else
           false        (* already present *)
       end else
         attempt ()     (* being removed concurrently, retry *)
