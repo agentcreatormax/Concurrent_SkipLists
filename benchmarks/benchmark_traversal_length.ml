@@ -124,8 +124,8 @@ let () =
   let contains = ref 90 in
   let initial_size = ref 100 in
   let max_level = ref 16 in
-  let value_range = ref 100 in
-  let runs = ref 100000 in
+  let value_range = ref 1000 in
+  let runs = ref 10000 in
   let csv_output = ref None in
 
   let speclist = [
@@ -136,13 +136,13 @@ let () =
     ("--contains", Arg.Set_int contains,
      "Percentage of contains operations (default: 90)");
     ("--initial-size", Arg.Set_int initial_size,
-     "Initial list size (default: 1000)");
+     "Initial list size (default: 100)");
     ("--max-level", Arg.Set_int max_level,
-     "Max levels in the skip list (default: 10)");
+     "Max levels in the skip list (default: 16)");
     ("--value-range", Arg.Set_int value_range,
-     "Range of values [0, N) (default: 10000)");
+     "Range of values [0, N) (default: 1000)");
     ("--runs", Arg.Set_int runs,
-     "Number of runs (default: 1000)");
+     "Number of runs (default: 10000)");
     ("--csv", Arg.String (fun s -> csv_output := Some s),
      "Output CSV file (optional)");
   ] in
