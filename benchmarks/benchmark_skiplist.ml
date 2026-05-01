@@ -116,9 +116,9 @@ let () =
   let threads = ref 4 in
   let contains = ref 90 in
   let duration = ref 2.0 in
-  let initial_size = ref 100 in
+  let initial_size = ref 1000 in
   let max_level = ref 10 in
-  let value_range = ref 100 in
+  let value_range = ref 10000 in
   let runs = ref 3 in
   let csv_output = ref None in
 
@@ -132,11 +132,11 @@ let () =
     ("--duration", Arg.Set_float duration,
      "Duration in seconds (default: 2.0)");
     ("--initial-size", Arg.Set_int initial_size,
-     "Initial list size (default: 1000)");
+     "Initial list size (default: 100)");
     ("--max-level", Arg.Set_int max_level,
      "Max levels in the skip list (default: 10)");
     ("--value-range", Arg.Set_int value_range,
-     "Range of values [0, N) (default: 10000)");
+     "Range of values [0, N) (default: 1000)");
     ("--runs", Arg.Set_int runs,
      "Number of runs (default: 3)");
     ("--csv", Arg.String (fun s -> csv_output := Some s),

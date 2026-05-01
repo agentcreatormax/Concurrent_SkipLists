@@ -13,7 +13,7 @@ DURATION=2.0
 RUNS=3
 MAX_LEVEL=13
 IMPLEMENTATIONS="finegrain lockfree hashtbl"
-THREAD_COUNTS="1 2 4 6 8 10 11"
+THREAD_COUNTS="1 2 4 6 8 10 12 13 14 15"
 
 echo "=== Starting Comprehensive List Benchmarks ==="
 echo "Duration: ${DURATION}s per run"
@@ -119,7 +119,7 @@ done
 
 RUNS=100000
 IMPLEMENTATIONS="finegrain lockfree"
-THREAD_COUNTS="1 2 4 6 8 10 11"
+# THREAD_COUNTS="1 2 4 6 8 10 11"
 INITIAL_SIZE=100
 VALUE_RANGE=1000
 # Experiment 5: Avg traversal length with equal ratios
