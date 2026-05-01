@@ -4,6 +4,9 @@ A comparative study of concurrent set implementations in OCaml 5, built around t
 
 ---
 
+#### Presentation and Recording link:  https://drive.google.com/drive/folders/1rnt4valJJSvt1Nv3EgqVWvaXF9dPabLy
+
+
 ## Table of Contents
 
 - [Overview](#overview)
