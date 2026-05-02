@@ -96,8 +96,8 @@ for impl in $IMPLEMENTATIONS; do
   done
 done
 
-# Experiment 4: Varying contains ratio (12 threads)
-echo "Experiment 4: Varying Contains Ratio (fixed 12 threads)"
+# Experiment 4: Varying contains ratio (14 threads)
+echo "Experiment 4: Varying Contains Ratio (fixed 14 threads)"
 CSV_FILE="$CSV_DIR/varying_contains.csv"
 rm -f "$CSV_FILE"
 echo "impl,threads,max_level,contains_pct,median,avg" > "$CSV_FILE"
@@ -107,7 +107,7 @@ for impl in $IMPLEMENTATIONS; do
     echo "  Running $impl with $contains% contains..."
     dune exec benchmarks/benchmark_skiplist.exe -- \
       --impl "$impl" \
-      --threads 6 \
+      --threads 14 \
       --contains "$contains" \
       --max-level "$MAX_LEVEL" \
       --duration "$DURATION" \

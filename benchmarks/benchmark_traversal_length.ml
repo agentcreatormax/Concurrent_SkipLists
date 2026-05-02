@@ -105,6 +105,7 @@ let run_benchmark impl_name num_threads contains_pct max_level initial_size valu
   (* warm up run *)
   let warmup_runs = 1000 in
   benchmark_list impl_module ~num_threads ~runs:warmup_runs ~contains_pct ~initial_size ~value_range ~max_level;
+  Gc.compact ();
 
   benchmark_list impl_module ~num_threads ~runs ~contains_pct ~initial_size ~value_range ~max_level;
 
